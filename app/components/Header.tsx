@@ -2,74 +2,36 @@ import Link from "next/link";
 
 export default function Header() {
   return (
-    <header
-      style={{
-        background: "#1e5ddb",
-        color: "white",
-        padding: "14px 16px",
-      }}
-    >
-      <div
-        style={{
-          maxWidth: 1100,
-          margin: "0 auto",
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-        }}
-      >
-        {/* Logo / Title */}
-        <Link
-          href="/"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            textDecoration: "none",
-            color: "white",
-            fontWeight: 700,
-            fontSize: 18,
-          }}
-        >
-          <div
-            style={{
-              width: 34,
-              height: 34,
-              borderRadius: "50%",
-              background: "rgba(255,255,255,0.25)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: 18,
-            }}
-          >
+    <header className="bg-blue-700 text-white">
+      <div className="max-w-[1100px] mx-auto flex items-center justify-between px-4 py-4 gap-4">
+        {/* Logo + Title */}
+        <Link href="/" className="flex items-center gap-3 no-underline text-white">
+          <div className="w-10 h-10 rounded-full bg-white/25 flex items-center justify-center text-xl font-bold">
             ¥
           </div>
 
           <div>
-            <div style={{ fontSize: 18 }}>Tỷ giá quy đổi tại Meilian.xyz</div>
-            <div style={{ fontSize: 12, opacity: 0.85 }}>
+            <div className="text-lg font-bold leading-tight">
+              Tỷ giá quy đổi tại Meilian.xyz
+            </div>
+            <div className="text-xs opacity-90">
               Cập nhật nhanh · Chính xác · Tham khảo
             </div>
           </div>
         </Link>
 
         {/* Menu */}
-        <nav style={{ display: "flex", gap: 18, fontWeight: 600 }}>
-          <Link href="/" style={{ color: "white", textDecoration: "none" }}>
+        <nav className="flex items-center gap-5 font-semibold text-sm">
+          <Link href="/" className="text-white no-underline hover:underline">
             Trang chủ
           </Link>
           <Link
             href="/gioi-thieu"
-            style={{ color: "white", textDecoration: "none" }}
+            className="text-white no-underline hover:underline"
           >
             Giới thiệu
           </Link>
-          <Link
-            href="/lien-he"
-            style={{ color: "white", textDecoration: "none" }}
-          >
+          <Link href="/lien-he" className="text-white no-underline hover:underline">
             Liên hệ
           </Link>
         </nav>
