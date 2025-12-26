@@ -1,16 +1,21 @@
-"use client"
+"use client";
 
-import HeaderBlue from "@/components/HeaderBlue";
 import ClockTitle from "@/components/ClockTitle";
 import RateCards from "@/components/RateCards";
 import TierBox from "@/components/TierBox";
 import NoteFooter from "@/components/NoteFooter";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-  
-  const [remoteRates, setRemoteRates] = useState<{ buy: number; sell: number; topup: number } | null>(null);
-  const [ratesStatus, setRatesStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [remoteRates, setRemoteRates] = useState<{
+    buy: number;
+    sell: number;
+    topup: number;
+  } | null>(null);
+
+  const [ratesStatus, setRatesStatus] = useState<
+    "idle" | "loading" | "ok" | "error"
+  >("idle");
 
   async function fetchRates() {
     try {
@@ -41,14 +46,18 @@ export default function Home() {
   const buy = remoteRates?.buy;
   const sell = remoteRates?.sell;
   const topup = remoteRates?.topup;
-return (
+
+  return (
     <main className="min-h-screen">
-      <HeaderBlue />
       <div className="max-w-6xl mx-auto px-4">
         <ClockTitle title="Tỷ giá quy đổi tại Meilian.xyz" />
         <RateCards />
-        <div className="mt-10"><TierBox /></div>
-        <div className="mt-10" id="lien-he"><NoteFooter /></div>
+        <div className="mt-10">
+          <TierBox />
+        </div>
+        <div className="mt-10" id="lien-he">
+          <NoteFooter />
+        </div>
       </div>
     </main>
   );
