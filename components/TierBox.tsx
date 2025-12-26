@@ -2,6 +2,44 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Tier } from "@/lib/types";
 
+type TierWithRange = Tier & { min?: number; max?: number };
+
+function parseRangeFromLabel(label: string) {
+  // Examples:
+  // "Mua từ 51¥ - 499¥"
+  // "Mua từ 500¥ - 999¥"
+  // "Trên 2001¥"
+  // "Dưới 50¥"
+  const text = label.toLowerCase();
+
+  // 1) Pattern: "mua từ X - Y"
+  const between = text.match(/từ\s+(\d+)\s*¥?\s*-\s*(\d+)\s*¥?/);
+  if (between) {
+    return { min: Number(between[1]), max: Number(between[2]) };
+  }
+
+  // 2) Pattern: "trên X"
+  const above = text.match(/trên\s+(\d+)\s*¥?/);
+  if (above) {
+    return { min: Number(above[1]), max: Infinity };
+  }
+
+  // 3) Pattern: "dưới X"
+  const below = text.match(/dưới\s+(\d+)\s*¥?/);
+  if (below) {
+    return { min: 0, max: Number(below[1]) };
+  }
+
+  // 4) Pattern: exact number (rare)
+  const single = text.match(/(\d+)\s*¥/);
+  if (single) {
+    const n = Number(single[1]);
+    return { min: n, max: n };
+  }
+
+  return null;
+}
+
 export default function TierBox() {
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [warning, setWarning] = useState("");
@@ -13,8 +51,8 @@ export default function TierBox() {
 
   // Modal state
   const [showPay, setShowPay] = useState(false);
-  const [payAmount, setPayAmount] = useState<number>(0); // số tiền cần thanh toán (VND)
-  const [payContent, setPayContent] = useState<string>(""); // nội dung chuyển khoản
+  const [payAmount, setPayAmount] = useState<number>(0);
+  const [payContent, setPayContent] = useState<string>("");
   const [copied, setCopied] = useState<string>("");
 
   useEffect(() => {
@@ -28,20 +66,42 @@ export default function TierBox() {
       .catch(() => {});
   }, []);
 
+  // ✅ Convert tiers => tiersWithRange (tự parse min/max)
+  const tiersWithRange: TierWithRange[] = useMemo(() => {
+    const mapped = (tiers || []).map((t) => {
+      const range = t.label ? parseRangeFromLabel(t.label) : null;
+      return {
+        ...t,
+        min: range?.min,
+        max: range?.max,
+      };
+    });
+
+    // Sort by min ascending (an toàn)
+    mapped.sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
+    return mapped;
+  }, [tiers]);
+
+  // ✅ Pick tier theo min/max -> không phụ thuộc index nữa
   const pickTier = useMemo(() => {
     const n = parseFloat(amount);
-    if (!n || !tiers.length) return null;
-    if (n < 50) return tiers[0];
-    if (n >= 51 && n <= 499) return tiers[1] || tiers[0];
-    if (n >= 500 && n <= 999) return tiers[2] || tiers[0];
-    if (n >= 1000 && n <= 2000) return tiers[3] || tiers[0];
-    return tiers[4] || tiers[tiers.length - 1];
-  }, [amount, tiers]);
+    if (!n || !tiersWithRange.length) return null;
+
+    // Find first tier whose range covers n
+    const found =
+      tiersWithRange.find((t) => {
+        const min = t.min ?? 0;
+        const max = t.max ?? Infinity;
+        return n >= min && n <= max;
+      }) || null;
+
+    // fallback: nếu không tìm được -> dùng tier đầu tiên
+    return found || tiersWithRange[0];
+  }, [amount, tiersWithRange]);
 
   const formatVND = (n: number) => n.toLocaleString("vi-VN") + " VND";
 
   const buildContent = (vnd: number) => {
-    // Cho phép template chứa {YEN} hoặc {VND}
     const tpl = payCfg?.contentTemplate || "Thanh toán {VND}";
     return tpl
       .replaceAll("{YEN}", amount || "")
@@ -51,6 +111,7 @@ export default function TierBox() {
   const calc = () => {
     const n = parseFloat(amount);
     if (!n || !pickTier) return setResult("");
+
     const vnd = n * pickTier.rate + (pickTier.fee || 0);
 
     setResult(formatVND(vnd));
@@ -74,11 +135,20 @@ export default function TierBox() {
 
       <div className="bg-gradient-to-b from-sky-600 to-blue-700 rounded-2xl p-5 text-white">
         <ul className="space-y-2">
-          {tiers.map((t, i) => (
-            <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
-              {t.label}: <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span>
+          {tiersWithRange.map((t, i) => (
+            <li
+              key={i}
+              className="bg-white/15 rounded-xl px-4 py-3 font-semibold"
+            >
+              {t.label}:{" "}
+              <span className="font-black">
+                {t.rate.toLocaleString("vi-VN")}
+              </span>
               {t.fee ? (
-                <span className="opacity-90"> (+{t.fee.toLocaleString("vi-VN")}đ phí)</span>
+                <span className="opacity-90">
+                  {" "}
+                  (+{t.fee.toLocaleString("vi-VN")}đ phí)
+                </span>
               ) : null}
             </li>
           ))}
@@ -95,7 +165,10 @@ export default function TierBox() {
             />
           </div>
 
-          <button onClick={calc} className="rounded-xl bg-white text-blue-700 font-extrabold px-5 py-2 shadow-soft">
+          <button
+            onClick={calc}
+            className="rounded-xl bg-white text-blue-700 font-extrabold px-5 py-2 shadow-soft"
+          >
             Tính tiền
           </button>
 
@@ -132,8 +205,14 @@ export default function TierBox() {
             </button>
 
             <div className="text-xl font-black text-slate-900">Thanh toán</div>
-            <div className="text-sm text-slate-500 mt-1">Vui lòng chuyển khoản đúng thông tin bên dưới</div>
-            <div className="text-sm text-slate-500 mt-1">Giá này chỉ để tham khảo. Có thể nhắn tin cho mình trước khi chuyển tiền để thương lượng</div>
+            <div className="text-sm text-slate-500 mt-1">
+              Vui lòng chuyển khoản đúng thông tin bên dưới
+            </div>
+            <div className="text-sm text-slate-500 mt-1">
+              Giá này chỉ để tham khảo. Có thể nhắn tin cho mình trước khi chuyển
+              tiền để thương lượng
+            </div>
+
             {/* Info */}
             <div className="mt-4 space-y-2 text-slate-700 text-sm">
               <div>
@@ -161,7 +240,9 @@ export default function TierBox() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <b>Số tiền:</b>{" "}
-                  <span className="text-red-600 font-black">{payAmount.toLocaleString("vi-VN")} VND</span>
+                  <span className="text-red-600 font-black">
+                    {payAmount.toLocaleString("vi-VN")} VND
+                  </span>
                 </div>
                 <button
                   onClick={() => copy(String(payAmount), "Số tiền")}
@@ -185,13 +266,19 @@ export default function TierBox() {
                 )}
               </div>
 
-              {copied && <div className="text-green-600 font-bold">✅ Đã copy {copied}</div>}
+              {copied && (
+                <div className="text-green-600 font-bold">✅ Đã copy {copied}</div>
+              )}
             </div>
 
             {/* QR ẢNH TĨNH */}
             <div className="mt-5 border rounded-2xl p-3 flex items-center justify-center bg-slate-50">
               {payCfg?.qrImage ? (
-                <img src={payCfg.qrImage} alt="QR ngân hàng" className="max-h-72 w-auto" />
+                <img
+                  src={payCfg.qrImage}
+                  alt="QR ngân hàng"
+                  className="max-h-72 w-auto"
+                />
               ) : (
                 <div className="text-sm text-slate-500">
                   Chưa có ảnh QR (hãy thêm payment.qrImage trong data/config.json)
