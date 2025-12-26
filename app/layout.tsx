@@ -2,7 +2,7 @@ import "./globals.css";
 import HeaderBlue from "@/components/HeaderBlue";
 
 export const metadata = {
-  title: "Meilian Tỷ Giá",
+  title: "CNY - VND Tỷ Giá",
   description: "Tỷ giá CNY ↔ VND cập nhật nhanh",
 };
 
