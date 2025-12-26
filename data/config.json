@@ -49,3 +49,11 @@
   },
   "history": []
 }
+,
+"payment": {
+  "bankName": "MB Bank",
+  "accountName": "NGUYEN VAN A",
+  "accountNumber": "0123456789",
+  "note": "Chuyển khoản đúng số tiền và ghi nội dung: <SĐT hoặc Mã đơn>",
+  "qrImage": "/113.jpg"
+}
