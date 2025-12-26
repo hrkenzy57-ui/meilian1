@@ -11,7 +11,7 @@
     },
     {
       "label": "Liên hệ",
-      "href": "#lien-he"
+      "href": "/lien-he"
     }
   ],
   "rates": {
@@ -20,7 +20,6 @@
     "topup": 3963
   },
   "tiers": [
-
     {
       "label": "Mua từ 51¥ - 499¥",
       "rate": 4000
@@ -47,4 +46,12 @@
     "zalo": "https://zalo.me/",
     "telegram": "https://t.me/"
   },
+  "payment": {
+    "bankCode": "xx",
+    "bankName": "xx",
+    "accountNumber": "xx",
+    "accountName": "xx",
+    "contentTemplate": "xx"
+  },
   "history": []
+}
