@@ -52,6 +52,7 @@
     "accountNumber": "xx",
     "accountName": "xx",
     "contentTemplate": "xx"
+    "qrImage": "/113.jpg"
   },
   "history": []
 }
