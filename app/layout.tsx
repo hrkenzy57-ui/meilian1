@@ -1,5 +1,5 @@
 import "./globals.css";
-import Header from "./components/Header";
+import HeaderBlue from "@/components/HeaderBlue";
 
 export const metadata = {
   title: "Meilian Tỷ Giá",
@@ -14,8 +14,8 @@ export default function RootLayout({
   return (
     <html lang="vi">
       <body className="bg-slate-50 text-slate-900">
-        <Header />
-        <main className="max-w-[1100px] mx-auto px-4 py-6">{children}</main>
+        <HeaderBlue />
+        {children}
       </body>
     </html>
   );
