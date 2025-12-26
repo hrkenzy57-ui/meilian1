@@ -18,9 +18,9 @@ export default function RateCards() {
   }, []);
 
   // ✅ GIỮ logic cộng/trừ phí như bạn đang thấy
-  const buy = rates.buy + 7;
-  const sell = rates.sell - 20;
-  const topup = rates.topup + 3;
+  const buy = rates.buy + 0;
+  const sell = rates.sell + 50;
+  const topup = rates.topup + 20;
 
   const Card = ({ label, value }: { label: string; value: number }) => (
     <div className="rounded-2xl bg-gradient-to-b from-sky-600 to-blue-700 text-white shadow-soft px-5 py-6 text-center">
