@@ -58,17 +58,6 @@ export default function TierBox() {
     setPayContent(buildContent(vnd));
   };
 
-  // VietQR (ảnh QR sinh tự động)
-  const qrUrl = useMemo(() => {
-    if (!payCfg?.bankCode || !payCfg?.accountNumber) return "";
-    const bank = encodeURIComponent(payCfg.bankCode);
-    const acc = encodeURIComponent(payCfg.accountNumber);
-    const amountNum = payAmount > 0 ? payAmount : 0;
-    const addInfo = encodeURIComponent(payContent || "");
-    // VietQR image API (public)
-    return `https://img.vietqr.io/image/${bank}-${acc}-compact2.png?amount=${amountNum}&addInfo=${addInfo}`;
-  }, [payCfg, payAmount, payContent]);
-
   const copy = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -88,7 +77,9 @@ export default function TierBox() {
           {tiers.map((t, i) => (
             <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
               {t.label}: <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span>
-              {t.fee ? <span className="opacity-90"> (+{t.fee.toLocaleString("vi-VN")}đ phí)</span> : null}
+              {t.fee ? (
+                <span className="opacity-90"> (+{t.fee.toLocaleString("vi-VN")}đ phí)</span>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -145,16 +136,12 @@ export default function TierBox() {
 
             {/* Info */}
             <div className="mt-4 space-y-2 text-slate-700 text-sm">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <b>Ngân hàng:</b> {payCfg?.bankName || "-"}
-                </div>
+              <div>
+                <b>Ngân hàng:</b> {payCfg?.bankName || "-"}
               </div>
 
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}
-                </div>
+              <div>
+                <b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}
               </div>
 
               <div className="flex items-center justify-between gap-3">
@@ -201,19 +188,15 @@ export default function TierBox() {
               {copied && <div className="text-green-600 font-bold">✅ Đã copy {copied}</div>}
             </div>
 
-            {/* QR */}
+            {/* QR ẢNH TĨNH */}
             <div className="mt-5 border rounded-2xl p-3 flex items-center justify-center bg-slate-50">
-              {qrUrl ? (
-                <img src={qrUrl} alt="QR ngân hàng" className="max-h-72 w-auto" />
+              {payCfg?.qrImage ? (
+                <img src={payCfg.qrImage} alt="QR ngân hàng" className="max-h-72 w-auto" />
               ) : (
                 <div className="text-sm text-slate-500">
-                  Chưa có QR (thiếu bankCode hoặc accountNumber trong config.json)
+                  Chưa có ảnh QR (hãy thêm payment.qrImage trong data/config.json)
                 </div>
               )}
-            </div>
-
-            <div className="mt-4 text-xs text-slate-500">
-              * QR được tạo theo chuẩn VietQR. Khi quét sẽ tự điền số tiền & nội dung.
             </div>
 
             <div className="mt-4 flex justify-end gap-2">
