@@ -1,3 +1,5 @@
+"use client"
+
 import HeaderBlue from "@/components/HeaderBlue";
 import ClockTitle from "@/components/ClockTitle";
 import RateCards from "@/components/RateCards";
