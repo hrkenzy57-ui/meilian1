@@ -17,7 +17,7 @@ export const runtime = "edge";
 
 function parseGViz(text: string) {
   // Google returns: google.visualization.Query.setResponse({...});
-  const match = text.match(/setResponse\((.*)\);?\s*$/s);
+  const match = text.match(/setResponse\(([\s\S]*)\);?\s*$/);
   if (!match) return null;
   return JSON.parse(match[1]);
 }
