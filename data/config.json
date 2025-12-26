@@ -1,0 +1,55 @@
+{
+  "siteName": "Tỷ giá quy đổi tại Meilian.xyz",
+  "menu": [
+    {
+      "label": "Trang chủ",
+      "href": "/"
+    },
+    {
+      "label": "Giới thiệu",
+      "href": "#gioi-thieu"
+    },
+    {
+      "label": "Liên hệ",
+      "href": "#lien-he"
+    }
+  ],
+  "rates": {
+    "buy": 3827,
+    "sell": 3930,
+    "topup": 3963
+  },
+  "tiers": [
+    {
+      "label": "Mua dưới 50¥",
+      "rate": 4010,
+      "fee": 5000
+    },
+    {
+      "label": "Mua từ 51¥ - 499¥",
+      "rate": 4000
+    },
+    {
+      "label": "Mua từ 500¥ - 999¥",
+      "rate": 3970
+    },
+    {
+      "label": "Mua từ 1000¥ - 2000¥",
+      "rate": 3950
+    },
+    {
+      "label": "Trên 2001¥",
+      "rate": 3930
+    }
+  ],
+  "warning": "Giá tệ đang biến động cao. Chủ động sắp xếp cần đổi để không bị gián đoạn công việc, kinh doanh.",
+  "noteBox": [
+    "Lưu ý: Tất cả các giá trị cung cấp trên trang web này chỉ mang tính chất tham khảo, so sánh.",
+    "Đơn nạp tệ: Số tiền nạp sẽ được làm tròn theo quy tắc: nếu là 0.50 tệ trở lên thì làm tròn lên, dưới 0.50 tệ thì làm tròn xuống."
+  ],
+  "contacts": {
+    "zalo": "https://zalo.me/",
+    "telegram": "https://t.me/"
+  },
+  "history": []
+}
