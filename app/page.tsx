@@ -50,7 +50,7 @@ export default function Home() {
   return (
     <main className="min-h-screen">
       <div className="max-w-6xl mx-auto px-4">
-        <ClockTitle title="Tỷ giá quy đổi tại Meilian.xyz" />
+        <ClockTitle title="Tỷ giá CNY-VND quy đổi tại Meilian.xyz" />
         <RateCards />
         <div className="mt-10">
           <TierBox />
