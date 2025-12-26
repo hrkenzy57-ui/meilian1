@@ -133,7 +133,7 @@ export default function TierBox() {
 
             <div className="text-xl font-black text-slate-900">Thanh toán</div>
             <div className="text-sm text-slate-500 mt-1">Vui lòng chuyển khoản đúng thông tin bên dưới</div>
-
+            <div className="text-sm text-slate-500 mt-1">Giá này chỉ để tham khảo. Có thể nhắn tin cho mình trước khi chuyển tiền để thương lượng</div>
             {/* Info */}
             <div className="mt-4 space-y-2 text-slate-700 text-sm">
               <div>
