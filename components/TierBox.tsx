@@ -8,12 +8,22 @@ export default function TierBox() {
   const [amount, setAmount] = useState("");
   const [result, setResult] = useState("");
 
+  // Payment config từ /api/config
+  const [payCfg, setPayCfg] = useState<any>(null);
+
+  // Modal state
+  const [showPay, setShowPay] = useState(false);
+  const [payAmount, setPayAmount] = useState<number>(0); // số tiền cần thanh toán (VND)
+  const [payContent, setPayContent] = useState<string>(""); // nội dung chuyển khoản
+  const [copied, setCopied] = useState<string>("");
+
   useEffect(() => {
     fetch("/api/config", { cache: "no-store" })
       .then((r) => r.json())
       .then((cfg) => {
         setTiers(cfg.tiers || []);
         setWarning(cfg.warning || "");
+        setPayCfg(cfg.payment || null);
       })
       .catch(() => {});
   }, []);
@@ -28,11 +38,45 @@ export default function TierBox() {
     return tiers[4] || tiers[tiers.length - 1];
   }, [amount, tiers]);
 
+  const formatVND = (n: number) => n.toLocaleString("vi-VN") + " VND";
+
+  const buildContent = (vnd: number) => {
+    // Cho phép template chứa {YEN} hoặc {VND}
+    const tpl = payCfg?.contentTemplate || "Thanh toán {VND}";
+    return tpl
+      .replaceAll("{YEN}", amount || "")
+      .replaceAll("{VND}", Math.round(vnd).toString());
+  };
+
   const calc = () => {
     const n = parseFloat(amount);
     if (!n || !pickTier) return setResult("");
     const vnd = n * pickTier.rate + (pickTier.fee || 0);
-    setResult(vnd.toLocaleString("vi-VN") + " VND");
+
+    setResult(formatVND(vnd));
+    setPayAmount(Math.round(vnd));
+    setPayContent(buildContent(vnd));
+  };
+
+  // VietQR (ảnh QR sinh tự động)
+  const qrUrl = useMemo(() => {
+    if (!payCfg?.bankCode || !payCfg?.accountNumber) return "";
+    const bank = encodeURIComponent(payCfg.bankCode);
+    const acc = encodeURIComponent(payCfg.accountNumber);
+    const amountNum = payAmount > 0 ? payAmount : 0;
+    const addInfo = encodeURIComponent(payContent || "");
+    // VietQR image API (public)
+    return `https://img.vietqr.io/image/${bank}-${acc}-compact2.png?amount=${amountNum}&addInfo=${addInfo}`;
+  }, [payCfg, payAmount, payContent]);
+
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(label);
+      setTimeout(() => setCopied(""), 1500);
+    } catch {
+      // fallback: không làm gì
+    }
   };
 
   return (
@@ -70,7 +114,119 @@ export default function TierBox() {
             </div>
           )}
         </div>
+
+        {/* NÚT THANH TOÁN */}
+        {result && payAmount > 0 && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => setShowPay(true)}
+              className="rounded-xl bg-amber-200 text-slate-900 font-black px-5 py-2 shadow-soft hover:opacity-95"
+            >
+              Thanh toán ở đây
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* MODAL THANH TOÁN */}
+      {showPay && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
+          <div className="bg-white rounded-2xl shadow-soft max-w-md w-full p-6 relative">
+            <button
+              className="absolute top-3 right-3 text-gray-500 hover:text-black"
+              onClick={() => setShowPay(false)}
+              aria-label="Close"
+            >
+              ✕
+            </button>
+
+            <div className="text-xl font-black text-slate-900">Thanh toán</div>
+            <div className="text-sm text-slate-500 mt-1">Vui lòng chuyển khoản đúng thông tin bên dưới</div>
+
+            {/* Info */}
+            <div className="mt-4 space-y-2 text-slate-700 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <b>Ngân hàng:</b> {payCfg?.bankName || "-"}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="truncate">
+                  <b>Số tài khoản:</b> {payCfg?.accountNumber || "-"}
+                </div>
+                {payCfg?.accountNumber && (
+                  <button
+                    onClick={() => copy(payCfg.accountNumber, "STK")}
+                    className="px-3 py-1 rounded-lg bg-slate-100 text-slate-900 font-bold"
+                  >
+                    Copy
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <b>Số tiền:</b>{" "}
+                  <span className="text-red-600 font-black">{payAmount.toLocaleString("vi-VN")} VND</span>
+                </div>
+                <button
+                  onClick={() => copy(String(payAmount), "Số tiền")}
+                  className="px-3 py-1 rounded-lg bg-slate-100 text-slate-900 font-bold"
+                >
+                  Copy
+                </button>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <div className="truncate">
+                  <b>Nội dung:</b> {payContent || "-"}
+                </div>
+                {payContent && (
+                  <button
+                    onClick={() => copy(payContent, "Nội dung")}
+                    className="px-3 py-1 rounded-lg bg-slate-100 text-slate-900 font-bold"
+                  >
+                    Copy
+                  </button>
+                )}
+              </div>
+
+              {copied && <div className="text-green-600 font-bold">✅ Đã copy {copied}</div>}
+            </div>
+
+            {/* QR */}
+            <div className="mt-5 border rounded-2xl p-3 flex items-center justify-center bg-slate-50">
+              {qrUrl ? (
+                <img src={qrUrl} alt="QR ngân hàng" className="max-h-72 w-auto" />
+              ) : (
+                <div className="text-sm text-slate-500">
+                  Chưa có QR (thiếu bankCode hoặc accountNumber trong config.json)
+                </div>
+              )}
+            </div>
+
+            <div className="mt-4 text-xs text-slate-500">
+              * QR được tạo theo chuẩn VietQR. Khi quét sẽ tự điền số tiền & nội dung.
+            </div>
+
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                onClick={() => setShowPay(false)}
+                className="rounded-xl bg-slate-100 text-slate-900 font-bold px-4 py-2"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
