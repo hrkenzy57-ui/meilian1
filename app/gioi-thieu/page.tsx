@@ -2,21 +2,37 @@ export default function GioiThieuPage() {
   // ✅ Chỉ cần sửa nội dung ở đây trên GitHub
   const items = [
     {
-      title: "Alipay",
+      title: "Alipay-支付宝",
       img: "/114.jpg",
       note: `
-- Đơn nạp tệ: Số lẻ, hay số nhiều mình đều giao dịch.
-- Có thể chuyển qua Alipay.
-- Thời gian xử lý: 1–5 phút tùy thời điểm.
+Tải xuống Alipay - 支付宝 về điện thoại
+
+Bước 1 : Đăng ký bằng SDT hoặc Email 
+Bước 2 : Cần xác minh tài khoản bằng hộ chiếu Việt Nam thành công. Tài khoản không bị hạn chế khi chuyển và nhận tiền
+Bước 3 : Vào phần Nhận tiền. Nhận tiền cá nhân. Lưu mã QR. Để tạo mã QR nhận tiền
+Bước 4 : Gửi ảnh QR cho người khác quét mã để nhận tiền
+
+Lưu ý: 
+1. Nếu tài khoản bị hạn chế, không thể nhận tiền.
+2. Tài khoản chưa xác minh bằng hộ chiếu, không thể nhận tiền.
+3. Tài khoản mới lập, không nên nhận lần đầu số tiền lớn. Nên thử 200, 300 trước.
       `,
     },
     {
-      title: "WeChat",
+      title: "WeChat-微信",
       img: "/115.jpg",
       note: `
-- Đơn nạp tệ: Số lẻ, hay số nhiều mình đều giao dịch.
-- Có thể chuyển qua WeChat.
-- Thời gian xử lý: 1–5 phút tùy thời điểm.
+Tải xuống  Wechat - 微信 về điện thoại
+
+Bước 1 :  Đã có sẵn tài khoản, đã xác minh bằng hộ chiếu Việt Nam
+Bước 2 :  Tài khoản không bị hạn chế khi chuyển và nhận tiền
+Bước 3 :  Vào phần Nhận tiền. Nhận tiền cá nhân. Lưu mã QR. Để tạo mã QR nhận tiền
+Bước 4 : Gửi ảnh QR cho người khác quét mã để nhận tiền
+
+Lưu ý: 
+1. Nếu tài khoản bị hạn chế, không thể nhận tiền.
+2. Tài khoản chưa xác minh bằng hộ chiếu, không thể nhận tiền.
+3. Tài khoản mới lập, không nên nhận lần đầu số tiền lớn. Nên thử 200, 300 trước.
       `,
     },
   ];
