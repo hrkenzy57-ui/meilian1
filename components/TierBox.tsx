@@ -177,7 +177,7 @@ export default function TierBox() {
 
     // ✅ SELL: VND -> CNY (fallback dùng rates.buy nếu không có sellTiers)
     if (mode === "sell") {
-      const rate = pickSellTier?.rate || rates?.buy || 3827;
+      const rate = pickSellTier?.rate || rates?.buy || 3800;
       const cny = n / rate;
 
       setSellRate(rate);
@@ -286,7 +286,7 @@ export default function TierBox() {
               <li className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
                 Đang dùng tỷ giá mặc định:{" "}
                 <span className="font-black">
-                  {(rates?.buy || 3827).toLocaleString("vi-VN")}
+                  {(rates?.buy || 3800).toLocaleString("vi-VN")}
                 </span>{" "}
                 đ/CNY
               </li>
@@ -329,7 +329,7 @@ export default function TierBox() {
         {mode === "sell" && result && sellCny > 0 && (
           <div className="mt-4 flex justify-center">
             <button
-              onClick={() => router.push("/gioi-thieu")}
+              onClick={() => router.push("/lien-he")}
               className="rounded-xl bg-green-700 text-white font-black px-6 py-3 shadow-soft hover:opacity-95"
             >
               Đi Bán tệ với {sellCny.toFixed(2)} CNY ngay »
