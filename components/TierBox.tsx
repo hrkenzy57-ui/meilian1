@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 
 type TierWithRange = Tier & { min?: number; max?: number };
 
-// sell tier theo VND
+// ✅ Sell tier theo VND (optional)
 type SellTier = {
   label: string;
   minVnd: number;
@@ -14,17 +14,32 @@ type SellTier = {
 };
 
 function parseRangeFromLabel(label: string) {
+  // Examples:
+  // "Mua từ 51¥ - 499¥"
+  // "Mua từ 500¥ - 999¥"
+  // "Trên 2001¥"
+  // "Dưới 50¥"
   const text = label.toLowerCase();
 
+  // 1) Pattern: "mua từ X - Y"
   const between = text.match(/từ\s+(\d+)\s*¥?\s*-\s*(\d+)\s*¥?/);
-  if (between) return { min: Number(between[1]), max: Number(between[2]) };
+  if (between) {
+    return { min: Number(between[1]), max: Number(between[2]) };
+  }
 
+  // 2) Pattern: "trên X"
   const above = text.match(/trên\s+(\d+)\s*¥?/);
-  if (above) return { min: Number(above[1]), max: Infinity };
+  if (above) {
+    return { min: Number(above[1]), max: Infinity };
+  }
 
+  // 3) Pattern: "dưới X"
   const below = text.match(/dưới\s+(\d+)\s*¥?/);
-  if (below) return { min: 0, max: Number(below[1]) };
+  if (below) {
+    return { min: 0, max: Number(below[1]) };
+  }
 
+  // 4) Pattern: exact number (rare)
   const single = text.match(/(\d+)\s*¥/);
   if (single) {
     const n = Number(single[1]);
@@ -37,14 +52,17 @@ function parseRangeFromLabel(label: string) {
 export default function TierBox() {
   const router = useRouter();
 
-  // ✅ mode: buy = CNY -> VND (mua tệ), sell = VND -> CNY (bán tệ)
+  // ✅ Mode: buy = CNY -> VND | sell = VND -> CNY
   const [mode, setMode] = useState<"buy" | "sell">("buy");
 
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [sellTiers, setSellTiers] = useState<SellTier[]>([]);
   const [warning, setWarning] = useState("");
 
-  const [amount, setAmount] = useState(""); // amount nhập
+  // ✅ Rates (fallback cho bán tệ nếu chưa có sellTiers)
+  const [rates, setRates] = useState<{ buy: number; sell: number; topup?: number } | null>(null);
+
+  const [amount, setAmount] = useState("");
   const [result, setResult] = useState("");
 
   // Payment config từ /api/config
@@ -56,7 +74,7 @@ export default function TierBox() {
   const [payContent, setPayContent] = useState<string>("");
   const [copied, setCopied] = useState<string>("");
 
-  // ✅ Kết quả CNY khi bán
+  // ✅ Sell result
   const [sellCny, setSellCny] = useState<number>(0);
   const [sellRate, setSellRate] = useState<number>(0);
 
@@ -65,45 +83,60 @@ export default function TierBox() {
       .then((r) => r.json())
       .then((cfg) => {
         setTiers(cfg.tiers || []);
-        setSellTiers(cfg.sellTiers || []);
+        setSellTiers(cfg.sellTiers || []); // optional
+        setRates(cfg.rates || null);
         setWarning(cfg.warning || "");
         setPayCfg(cfg.payment || null);
+
+        // ✅ Debug
+        // console.log("cfg loaded:", cfg);
       })
       .catch(() => {});
   }, []);
 
-  // ✅ Convert buy tiers => tiersWithRange (tự parse min/max)
+  // ✅ Convert tiers => tiersWithRange (tự parse min/max)
   const tiersWithRange: TierWithRange[] = useMemo(() => {
     const mapped = (tiers || []).map((t) => {
       const range = t.label ? parseRangeFromLabel(t.label) : null;
-      return { ...t, min: range?.min, max: range?.max };
+      return {
+        ...t,
+        min: range?.min,
+        max: range?.max,
+      };
     });
+
     mapped.sort((a, b) => (a.min ?? 0) - (b.min ?? 0));
     return mapped;
   }, [tiers]);
 
-  // ✅ Pick tier theo min/max cho BUY
+  // ✅ Parse amount (fix nhập có dấu chấm/phẩy)
+  const parseAmount = (value: string) => {
+    if (!value) return 0;
+    const cleaned = value.replaceAll(".", "").replaceAll(",", "").trim();
+    return parseFloat(cleaned);
+  };
+
+  // ✅ pick tier for BUY (CNY)
   const pickBuyTier = useMemo(() => {
-    const n = parseFloat(amount);
+    const n = parseAmount(amount);
     if (!n || !tiersWithRange.length) return null;
 
-    return (
+    const found =
       tiersWithRange.find((t) => {
         const min = t.min ?? 0;
         const max = t.max ?? Infinity;
         return n >= min && n <= max;
-      }) || tiersWithRange[0]
-    );
+      }) || null;
+
+    return found || tiersWithRange[0] || null;
   }, [amount, tiersWithRange]);
 
-  // ✅ Pick tier theo VND cho SELL
+  // ✅ pick tier for SELL (VND)
   const pickSellTier = useMemo(() => {
-    const vnd = parseFloat(amount);
+    const vnd = parseAmount(amount);
     if (!vnd || !sellTiers.length) return null;
 
-    return (
-      sellTiers.find((t) => vnd >= t.minVnd && vnd <= t.maxVnd) || sellTiers[0]
-    );
+    return sellTiers.find((t) => vnd >= t.minVnd && vnd <= t.maxVnd) || sellTiers[0] || null;
   }, [amount, sellTiers]);
 
   const formatVND = (n: number) => n.toLocaleString("vi-VN") + " VND";
@@ -115,41 +148,49 @@ export default function TierBox() {
       .replaceAll("{VND}", Math.round(vnd).toString());
   };
 
-  // ✅ Tính toán
   const calc = () => {
-    const n = parseFloat(amount);
-    if (!n) return setResult("");
+    const n = parseAmount(amount);
+    if (!n || n <= 0) {
+      setResult("");
+      setPayAmount(0);
+      setPayContent("");
+      setSellCny(0);
+      setSellRate(0);
+      return;
+    }
 
-    // ✅ BUY: CNY -> VND (mua tệ)
+    // ✅ BUY: CNY -> VND
     if (mode === "buy") {
       if (!pickBuyTier) return setResult("");
+
       const vnd = n * pickBuyTier.rate + (pickBuyTier.fee || 0);
 
       setResult(formatVND(vnd));
       setPayAmount(Math.round(vnd));
       setPayContent(buildContent(vnd));
+
+      // reset sell result
       setSellCny(0);
       setSellRate(0);
+      return;
     }
 
-    // ✅ SELL: VND -> CNY (bán tệ)
+    // ✅ SELL: VND -> CNY (fallback dùng rates.buy nếu không có sellTiers)
     if (mode === "sell") {
-      if (!pickSellTier) return setResult("");
-
-      const rate = pickSellTier.rate;
+      const rate = pickSellTier?.rate || rates?.buy || 3827;
       const cny = n / rate;
 
       setSellRate(rate);
       setSellCny(cny);
+
       setResult(
-        `${formatVND(n)} (Áp dụng: ${rate.toLocaleString("vi-VN")}đ/CNY) ≈ ${cny.toFixed(
-          2
-        )} CNY`
+        `${formatVND(n)} (Áp dụng: ${rate.toLocaleString("vi-VN")}đ/CNY) ≈ ${cny.toFixed(2)} CNY`
       );
 
-      // ✅ bán tệ không cần payment modal
+      // sell không mở modal thanh toán
       setPayAmount(0);
       setPayContent("");
+      return;
     }
   };
 
@@ -158,23 +199,27 @@ export default function TierBox() {
       await navigator.clipboard.writeText(text);
       setCopied(label);
       setTimeout(() => setCopied(""), 1500);
-    } catch {}
+    } catch {
+      // fallback: không làm gì
+    }
   };
 
   return (
     <div className="bg-amber-100 rounded-2xl shadow-soft p-6 space-y-4">
       <div className="text-red-700 font-bold">{warning}</div>
 
-      {/* ✅ Mode Switch */}
-      <div className="flex gap-2">
+      {/* ✅ SWITCH MODE */}
+      <div className="flex gap-3 flex-wrap">
         <button
           onClick={() => {
             setMode("buy");
             setAmount("");
             setResult("");
+            setSellCny(0);
+            setSellRate(0);
           }}
-          className={`px-4 py-2 rounded-xl font-black ${
-            mode === "buy" ? "bg-blue-700 text-white" : "bg-white text-blue-700"
+          className={`rounded-xl px-5 py-2 font-black shadow-soft ${
+            mode === "buy" ? "bg-white text-blue-700" : "bg-white/60 text-blue-700"
           }`}
         >
           Mua tệ (CNY → VND)
@@ -185,11 +230,13 @@ export default function TierBox() {
             setMode("sell");
             setAmount("");
             setResult("");
+            setPayAmount(0);
+            setPayContent("");
           }}
-          className={`px-4 py-2 rounded-xl font-black ${
+          className={`rounded-xl px-5 py-2 font-black shadow-soft ${
             mode === "sell"
               ? "bg-green-700 text-white"
-              : "bg-white text-green-700"
+              : "bg-green-600/70 text-white"
           }`}
         >
           Bán tệ (VND → CNY)
@@ -197,7 +244,7 @@ export default function TierBox() {
       </div>
 
       <div className="bg-gradient-to-b from-sky-600 to-blue-700 rounded-2xl p-5 text-white">
-        {/* ✅ HIỂN THỊ BẢNG THEO MODE */}
+        {/* ✅ LIST TIERS */}
         {mode === "buy" && (
           <ul className="space-y-2">
             {tiersWithRange.map((t, i) => (
@@ -222,18 +269,28 @@ export default function TierBox() {
 
         {mode === "sell" && (
           <ul className="space-y-2">
-            {(sellTiers || []).map((t, i) => (
-              <li
-                key={i}
-                className="bg-white/15 rounded-xl px-4 py-3 font-semibold"
-              >
-                {t.label}:{" "}
+            {sellTiers?.length ? (
+              sellTiers.map((t, i) => (
+                <li
+                  key={i}
+                  className="bg-white/15 rounded-xl px-4 py-3 font-semibold"
+                >
+                  {t.label}:{" "}
+                  <span className="font-black">
+                    {t.rate.toLocaleString("vi-VN")}
+                  </span>{" "}
+                  đ/CNY
+                </li>
+              ))
+            ) : (
+              <li className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
+                Đang dùng tỷ giá mặc định:{" "}
                 <span className="font-black">
-                  {t.rate.toLocaleString("vi-VN")}
+                  {(rates?.buy || 3827).toLocaleString("vi-VN")}
                 </span>{" "}
                 đ/CNY
               </li>
-            ))}
+            )}
           </ul>
         )}
 
@@ -243,11 +300,13 @@ export default function TierBox() {
             <span className="font-bold">
               {mode === "buy" ? "Nhập số ¥:" : "Nhập số VND:"}
             </span>
+
             <input
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
-              placeholder={mode === "buy" ? "Ví dụ: 688" : "Ví dụ: 5000000"}
-              className="w-48 rounded-xl px-3 py-2 text-slate-900"
+              placeholder={mode === "buy" ? "Ví dụ: 688" : "Ví dụ: 5.000.000"}
+              className="w-56 rounded-xl px-3 py-2 text-slate-900"
+              inputMode="numeric"
             />
           </div>
 
@@ -266,19 +325,19 @@ export default function TierBox() {
           </div>
         )}
 
-        {/* ✅ NÚT “Đi bán tệ” (mode sell) */}
+        {/* ✅ BUTTON: Đi bán tệ */}
         {mode === "sell" && result && sellCny > 0 && (
           <div className="mt-4 flex justify-center">
             <button
               onClick={() => router.push("/gioi-thieu")}
-              className="rounded-xl bg-green-600 text-white font-black px-6 py-3 shadow-soft hover:opacity-95"
+              className="rounded-xl bg-green-700 text-white font-black px-6 py-3 shadow-soft hover:opacity-95"
             >
               Đi Bán tệ với {sellCny.toFixed(2)} CNY ngay »
             </button>
           </div>
         )}
 
-        {/* ✅ NÚT THANH TOÁN (chỉ mode BUY) */}
+        {/* ✅ BUTTON: Thanh toán (chỉ BUY) */}
         {mode === "buy" && result && payAmount > 0 && (
           <div className="mt-4 flex justify-end">
             <button
@@ -291,7 +350,7 @@ export default function TierBox() {
         )}
       </div>
 
-      {/* ✅ MODAL THANH TOÁN (giữ nguyên, chỉ mở khi BUY) */}
+      {/* ✅ MODAL THANH TOÁN (chỉ BUY) */}
       {showPay && mode === "buy" && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
           <div className="bg-white rounded-2xl shadow-soft max-w-md w-full p-6 relative">
@@ -307,7 +366,12 @@ export default function TierBox() {
             <div className="text-sm text-slate-500 mt-1">
               Vui lòng chuyển khoản đúng thông tin bên dưới
             </div>
+            <div className="text-sm text-slate-500 mt-1">
+              Giá này chỉ để tham khảo. Có thể nhắn tin cho mình trước khi chuyển
+              tiền để thương lượng
+            </div>
 
+            {/* Info */}
             <div className="mt-4 space-y-2 text-slate-700 text-sm">
               <div>
                 <b>Ngân hàng:</b> {payCfg?.bankName || "-"}
@@ -365,6 +429,7 @@ export default function TierBox() {
               )}
             </div>
 
+            {/* QR */}
             <div className="mt-5 border rounded-2xl p-3 flex items-center justify-center bg-slate-50">
               {payCfg?.qrImage ? (
                 <img
