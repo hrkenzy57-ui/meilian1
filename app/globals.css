@@ -1,6 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ✅ Scroll mượt khi dùng #anchor (vd: /#quy-doi) */
 html {
   scroll-behavior: smooth;
+}
+
+/* ✅ Nên có cho đẹp, không bắt buộc */
+body {
+  margin: 0;
+  padding: 0;
 }
