@@ -147,9 +147,11 @@ function TierBoxInner() {
       return;
     }
 
+    // ✅ BUY: CNY -> VND
     if (mode === "buy") {
       if (!pickBuyTier) return setResult("");
       const vnd = n * pickBuyTier.rate + (pickBuyTier.fee || 0);
+
       setResult(formatVND(vnd));
       setPayAmount(Math.round(vnd));
       setPayContent(buildContent(vnd));
@@ -157,6 +159,7 @@ function TierBoxInner() {
       return;
     }
 
+    // ✅ SELL: VND -> CNY
     if (mode === "sell") {
       const rate = pickSellTier?.rate || rates?.buy || 3800;
       const cny = n / rate;
@@ -186,8 +189,9 @@ function TierBoxInner() {
     <div className="bg-amber-100 rounded-2xl shadow-soft p-6 space-y-4">
       <div className="text-red-700 font-bold">{warning}</div>
 
-      {/* Switch */}
+      {/* ✅ Switch: 2 nút luôn trắng, active đổi viền/chữ */}
       <div className="flex gap-3 flex-wrap">
+        {/* ✅ Mua tệ */}
         <button
           onClick={() => {
             setMode("buy");
@@ -195,15 +199,17 @@ function TierBoxInner() {
             setResult("");
             setSellCny(0);
           }}
-          className={`rounded-xl px-5 py-2 font-black shadow-soft ${
-            mode === "buy"
-              ? "bg-white text-blue-700"
-              : "bg-white/60 text-blue-700"
-          }`}
+          className={`rounded-xl px-5 py-2 font-black shadow-soft border-2 transition
+            ${
+              mode === "buy"
+                ? "bg-white text-blue-700 border-blue-600"
+                : "bg-white text-slate-700 border-transparent hover:border-white/60"
+            }`}
         >
           Mua tệ (CNY → VND)
         </button>
 
+        {/* ✅ Bán tệ */}
         <button
           onClick={() => {
             setMode("sell");
@@ -212,17 +218,19 @@ function TierBoxInner() {
             setPayAmount(0);
             setPayContent("");
           }}
-          className={`rounded-xl px-5 py-2 font-black shadow-soft ${
-            mode === "sell"
-              ? "bg-green-700 text-white"
-              : "bg-green-600/70 text-white"
-          }`}
+          className={`rounded-xl px-5 py-2 font-black shadow-soft border-2 transition
+            ${
+              mode === "sell"
+                ? "bg-white text-green-700 border-green-600"
+                : "bg-white text-slate-700 border-transparent hover:border-white/60"
+            }`}
         >
           Bán tệ (VND → CNY)
         </button>
       </div>
 
       <div className="bg-gradient-to-b from-sky-600 to-blue-700 rounded-2xl p-5 text-white">
+        {/* SELL tiers */}
         {mode === "sell" && (
           <ul className="space-y-2">
             {sellTiers?.length ? (
@@ -250,6 +258,7 @@ function TierBoxInner() {
           </ul>
         )}
 
+        {/* BUY tiers */}
         {mode === "buy" && (
           <ul className="space-y-2">
             {tiersWithRange.map((t, i) => (
@@ -268,12 +277,10 @@ function TierBoxInner() {
 
         {/* ✅ Input (Label trên - input full width - button full width) */}
         <div className="mt-5 flex flex-col gap-3">
-          {/* Label */}
           <div className="font-bold">
             {mode === "buy" ? "Nhập số ¥:" : "Nhập số VND:"}
           </div>
 
-          {/* Input */}
           <input
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
@@ -282,7 +289,6 @@ function TierBoxInner() {
             inputMode="numeric"
           />
 
-          {/* Button */}
           <button
             onClick={calc}
             className="rounded-xl bg-white text-blue-700 font-extrabold px-5 py-3 shadow-soft w-full active:scale-[0.99] transition"
@@ -291,12 +297,14 @@ function TierBoxInner() {
           </button>
         </div>
 
+        {/* Result */}
         {result && (
           <div className="mt-4 font-black text-lg md:text-xl text-center bg-white/10 rounded-xl py-4 px-3">
             {result}
           </div>
         )}
 
+        {/* ✅ Button: Đi Bán tệ */}
         {mode === "sell" && result && sellCny > 0 && (
           <div className="mt-4 flex justify-center">
             <button
@@ -308,6 +316,7 @@ function TierBoxInner() {
           </div>
         )}
 
+        {/* ✅ Button: Thanh toán mua tệ */}
         {mode === "buy" && result && payAmount > 0 && (
           <div className="mt-4 flex justify-end">
             <button
@@ -320,7 +329,7 @@ function TierBoxInner() {
         )}
       </div>
 
-      {/* Modal */}
+      {/* ✅ Modal Thanh toán */}
       {showPay && mode === "buy" && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
           <div className="bg-white rounded-2xl shadow-soft max-w-md w-full p-6 relative">
