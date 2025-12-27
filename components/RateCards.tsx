@@ -1,9 +1,11 @@
 "use client";
 import { useEffect, useState } from "react";
 import type { Rates } from "@/lib/types";
+import { useRouter } from "next/navigation";
 
 export default function RateCards() {
-  // ✅ Không cần topup nữa
+  const router = useRouter();
+
   const [rates, setRates] = useState<Omit<Rates, "topup">>({
     buy: 0,
     sell: 0,
@@ -30,19 +32,36 @@ export default function RateCards() {
   const buy = rates.buy + 0;
   const sell = rates.sell + 50;
 
-  const Card = ({ label, value }: { label: string; value: number }) => (
-    <div className="rounded-2xl bg-gradient-to-b from-sky-600 to-blue-700 text-white shadow-soft px-5 py-6 text-center">
+  const Card = ({
+    label,
+    value,
+    mode,
+  }: {
+    label: string;
+    value: number;
+    mode: "buy" | "sell";
+  }) => (
+    <button
+      onClick={() => router.push(`/#quy-doi?mode=${mode}`)}
+      className="rounded-2xl bg-gradient-to-b from-sky-600 to-blue-700 text-white shadow-soft px-5 py-6 text-center hover:opacity-95 transition w-full"
+    >
       <div className="text-lg font-extrabold">{label}</div>
       <div className="mt-2 text-3xl font-black">
         {value.toLocaleString("vi-VN")} VND
       </div>
-    </div>
+      <div className="mt-2 text-sm opacity-90 font-semibold">
+        Bấm để tính quy đổi ↓
+      </div>
+    </button>
   );
 
   return (
     <div className="grid md:grid-cols-2 gap-6">
-      <Card label="Mua vào" value={buy} />
-      <Card label="Bán ra" value={sell} />
+      {/* ✅ Mua vào => chọn tab Bán tệ (VND → CNY) */}
+      <Card label="Mua vào" value={buy} mode="sell" />
+
+      {/* ✅ Bán ra => chọn tab Mua tệ (CNY → VND) */}
+      <Card label="Bán ra" value={sell} mode="buy" />
     </div>
   );
 }
