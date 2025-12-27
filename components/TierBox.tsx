@@ -44,7 +44,11 @@ function TierBoxInner() {
   const [sellTiers, setSellTiers] = useState<SellTier[]>([]);
   const [warning, setWarning] = useState("");
 
-  const [rates, setRates] = useState<{ buy: number; sell: number; topup?: number } | null>(null);
+  const [rates, setRates] = useState<{
+    buy: number;
+    sell: number;
+    topup?: number;
+  } | null>(null);
 
   const [amount, setAmount] = useState("");
   const [result, setResult] = useState("");
@@ -117,7 +121,11 @@ function TierBoxInner() {
     const vnd = parseAmount(amount);
     if (!vnd || !sellTiers.length) return null;
 
-    return sellTiers.find((t) => vnd >= t.minVnd && vnd <= t.maxVnd) || sellTiers[0] || null;
+    return (
+      sellTiers.find((t) => vnd >= t.minVnd && vnd <= t.maxVnd) ||
+      sellTiers[0] ||
+      null
+    );
   }, [amount, sellTiers]);
 
   const formatVND = (n: number) => n.toLocaleString("vi-VN") + " VND";
@@ -154,9 +162,10 @@ function TierBoxInner() {
       const cny = n / rate;
 
       setSellCny(cny);
-
       setResult(
-        `${formatVND(n)} (Áp dụng: ${rate.toLocaleString("vi-VN")}đ/CNY) ≈ ${cny.toFixed(2)} CNY`
+        `${formatVND(n)} (Áp dụng: ${rate.toLocaleString(
+          "vi-VN"
+        )}đ/CNY) ≈ ${cny.toFixed(2)} CNY`
       );
 
       setPayAmount(0);
@@ -187,7 +196,9 @@ function TierBoxInner() {
             setSellCny(0);
           }}
           className={`rounded-xl px-5 py-2 font-black shadow-soft ${
-            mode === "buy" ? "bg-white text-blue-700" : "bg-white/60 text-blue-700"
+            mode === "buy"
+              ? "bg-white text-blue-700"
+              : "bg-white/60 text-blue-700"
           }`}
         >
           Mua tệ (CNY → VND)
@@ -216,15 +227,24 @@ function TierBoxInner() {
           <ul className="space-y-2">
             {sellTiers?.length ? (
               sellTiers.map((t, i) => (
-                <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
+                <li
+                  key={i}
+                  className="bg-white/15 rounded-xl px-4 py-3 font-semibold"
+                >
                   {t.label}:{" "}
-                  <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span> đ/CNY
+                  <span className="font-black">
+                    {t.rate.toLocaleString("vi-VN")}
+                  </span>{" "}
+                  đ/CNY
                 </li>
               ))
             ) : (
               <li className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
                 Đang dùng tỷ giá mặc định:{" "}
-                <span className="font-black">{(rates?.buy || 3800).toLocaleString("vi-VN")}</span> đ/CNY
+                <span className="font-black">
+                  {(rates?.buy || 3800).toLocaleString("vi-VN")}
+                </span>{" "}
+                đ/CNY
               </li>
             )}
           </ul>
@@ -233,30 +253,39 @@ function TierBoxInner() {
         {mode === "buy" && (
           <ul className="space-y-2">
             {tiersWithRange.map((t, i) => (
-              <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
+              <li
+                key={i}
+                className="bg-white/15 rounded-xl px-4 py-3 font-semibold"
+              >
                 {t.label}:{" "}
-                <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span>
+                <span className="font-black">
+                  {t.rate.toLocaleString("vi-VN")}
+                </span>
               </li>
             ))}
           </ul>
         )}
 
-        {/* Input */}
-        <div className="mt-5 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-          <div className="flex items-center gap-2">
-            <span className="font-bold">{mode === "buy" ? "Nhập số ¥:" : "Nhập số VND:"}</span>
-            <input
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder={mode === "buy" ? "Ví dụ: 688" : "Ví dụ: 5.000.000"}
-              className="w-56 rounded-xl px-3 py-2 text-slate-900"
-              inputMode="numeric"
-            />
+        {/* ✅ Input (Label trên - input full width - button full width) */}
+        <div className="mt-5 flex flex-col gap-3">
+          {/* Label */}
+          <div className="font-bold">
+            {mode === "buy" ? "Nhập số ¥:" : "Nhập số VND:"}
           </div>
 
+          {/* Input */}
+          <input
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder={mode === "buy" ? "Ví dụ: 688" : "Ví dụ: 5.000.000"}
+            className="w-full rounded-xl px-4 py-3 text-slate-900"
+            inputMode="numeric"
+          />
+
+          {/* Button */}
           <button
             onClick={calc}
-            className="rounded-xl bg-white text-blue-700 font-extrabold px-5 py-2 shadow-soft"
+            className="rounded-xl bg-white text-blue-700 font-extrabold px-5 py-3 shadow-soft w-full active:scale-[0.99] transition"
           >
             Tính toán
           </button>
@@ -309,11 +338,17 @@ function TierBoxInner() {
             </div>
 
             <div className="mt-4 space-y-2 text-slate-700 text-sm">
-              <div><b>Ngân hàng:</b> {payCfg?.bankName || "-"}</div>
-              <div><b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}</div>
+              <div>
+                <b>Ngân hàng:</b> {payCfg?.bankName || "-"}
+              </div>
+              <div>
+                <b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}
+              </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="truncate"><b>Số tài khoản:</b> {payCfg?.accountNumber || "-"}</div>
+                <div className="truncate">
+                  <b>Số tài khoản:</b> {payCfg?.accountNumber || "-"}
+                </div>
                 {payCfg?.accountNumber && (
                   <button
                     onClick={() => copy(payCfg.accountNumber, "STK")}
@@ -340,7 +375,9 @@ function TierBoxInner() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="truncate"><b>Nội dung:</b> {payContent || "-"}</div>
+                <div className="truncate">
+                  <b>Nội dung:</b> {payContent || "-"}
+                </div>
                 {payContent && (
                   <button
                     onClick={() => copy(payContent, "Nội dung")}
@@ -352,13 +389,19 @@ function TierBoxInner() {
               </div>
 
               {copied && (
-                <div className="text-green-600 font-bold">✅ Đã copy {copied}</div>
+                <div className="text-green-600 font-bold">
+                  ✅ Đã copy {copied}
+                </div>
               )}
             </div>
 
             <div className="mt-5 border rounded-2xl p-3 flex items-center justify-center bg-slate-50">
               {payCfg?.qrImage ? (
-                <img src={payCfg.qrImage} alt="QR ngân hàng" className="max-h-72 w-auto" />
+                <img
+                  src={payCfg.qrImage}
+                  alt="QR ngân hàng"
+                  className="max-h-72 w-auto"
+                />
               ) : (
                 <div className="text-sm text-slate-500">
                   Chưa có ảnh QR (hãy thêm payment.qrImage trong data/config.json)
