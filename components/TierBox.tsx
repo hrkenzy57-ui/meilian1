@@ -271,7 +271,7 @@ function TierBoxInner() {
         {mode === "sell" && result && sellCny > 0 && (
           <div className="mt-4 flex justify-center">
             <button
-              onClick={() => router.push("/gioi-thieu")}
+              onClick={() => router.push("/lien-he")}
               className="rounded-xl bg-green-700 text-white font-black px-6 py-3 shadow-soft hover:opacity-95"
             >
               Đi Bán tệ với {sellCny.toFixed(2)} CNY ngay »
