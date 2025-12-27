@@ -43,18 +43,19 @@ export default function Home() {
     return () => clearInterval(t);
   }, []);
 
-  const buy = remoteRates?.buy;
-  const sell = remoteRates?.sell;
-  const topup = remoteRates?.topup;
-
   return (
     <main className="min-h-screen">
       <div className="max-w-6xl mx-auto px-4">
         <ClockTitle title="Tỷ giá CNY-VND quy đổi tại Meilian.xyz" />
+
+        {/* ✅ RateCards có thể click và scroll xuống TierBox */}
         <RateCards />
-        <div className="mt-10">
+
+        {/* ✅ ID để RateCards scroll tới */}
+        <div className="mt-10 scroll-mt-28" id="quy-doi">
           <TierBox />
         </div>
+
         <div className="mt-10" id="lien-he">
           <NoteFooter />
         </div>
