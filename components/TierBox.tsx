@@ -1,11 +1,10 @@
 "use client";
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import type { Tier } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 
 type TierWithRange = Tier & { min?: number; max?: number };
 
-// ✅ Sell tier theo VND (optional)
 type SellTier = {
   label: string;
   minVnd: number;
@@ -34,33 +33,29 @@ function parseRangeFromLabel(label: string) {
   return null;
 }
 
-export default function TierBox() {
+/** ✅ Component con: chỉ component này dùng useSearchParams */
+function TierBoxInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // ✅ Mode: buy = CNY -> VND | sell = VND -> CNY
   const [mode, setMode] = useState<"buy" | "sell">("buy");
 
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [sellTiers, setSellTiers] = useState<SellTier[]>([]);
   const [warning, setWarning] = useState("");
 
-  // ✅ Rates (fallback cho bán tệ nếu chưa có sellTiers)
   const [rates, setRates] = useState<{ buy: number; sell: number; topup?: number } | null>(null);
 
   const [amount, setAmount] = useState("");
   const [result, setResult] = useState("");
 
-  // Payment config từ /api/config
   const [payCfg, setPayCfg] = useState<any>(null);
 
-  // Modal state
   const [showPay, setShowPay] = useState(false);
   const [payAmount, setPayAmount] = useState<number>(0);
   const [payContent, setPayContent] = useState<string>("");
   const [copied, setCopied] = useState<string>("");
 
-  // ✅ Sell result
   const [sellCny, setSellCny] = useState<number>(0);
 
   useEffect(() => {
@@ -76,7 +71,7 @@ export default function TierBox() {
       .catch(() => {});
   }, []);
 
-  // ✅ auto set mode từ URL (?mode=buy|sell)
+  /** ✅ Auto set mode từ URL (?mode=buy|sell) */
   useEffect(() => {
     const m = searchParams.get("mode");
     if (m === "buy" || m === "sell") {
@@ -144,10 +139,8 @@ export default function TierBox() {
       return;
     }
 
-    // ✅ BUY: CNY -> VND
     if (mode === "buy") {
       if (!pickBuyTier) return setResult("");
-
       const vnd = n * pickBuyTier.rate + (pickBuyTier.fee || 0);
       setResult(formatVND(vnd));
       setPayAmount(Math.round(vnd));
@@ -156,7 +149,6 @@ export default function TierBox() {
       return;
     }
 
-    // ✅ SELL: VND -> CNY
     if (mode === "sell") {
       const rate = pickSellTier?.rate || rates?.buy || 3800;
       const cny = n / rate;
@@ -185,7 +177,7 @@ export default function TierBox() {
     <div className="bg-amber-100 rounded-2xl shadow-soft p-6 space-y-4">
       <div className="text-red-700 font-bold">{warning}</div>
 
-      {/* ✅ SWITCH MODE */}
+      {/* Switch */}
       <div className="flex gap-3 flex-wrap">
         <button
           onClick={() => {
@@ -220,18 +212,6 @@ export default function TierBox() {
       </div>
 
       <div className="bg-gradient-to-b from-sky-600 to-blue-700 rounded-2xl p-5 text-white">
-        {/* ✅ LIST TIERS */}
-        {mode === "buy" && (
-          <ul className="space-y-2">
-            {tiersWithRange.map((t, i) => (
-              <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
-                {t.label}:{" "}
-                <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
         {mode === "sell" && (
           <ul className="space-y-2">
             {sellTiers?.length ? (
@@ -250,6 +230,18 @@ export default function TierBox() {
           </ul>
         )}
 
+        {mode === "buy" && (
+          <ul className="space-y-2">
+            {tiersWithRange.map((t, i) => (
+              <li key={i} className="bg-white/15 rounded-xl px-4 py-3 font-semibold">
+                {t.label}:{" "}
+                <span className="font-black">{t.rate.toLocaleString("vi-VN")}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {/* Input */}
         <div className="mt-5 flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           <div className="flex items-center gap-2">
             <span className="font-bold">{mode === "buy" ? "Nhập số ¥:" : "Nhập số VND:"}</span>
@@ -276,7 +268,6 @@ export default function TierBox() {
           </div>
         )}
 
-        {/* ✅ Button đi bán tệ */}
         {mode === "sell" && result && sellCny > 0 && (
           <div className="mt-4 flex justify-center">
             <button
@@ -288,7 +279,6 @@ export default function TierBox() {
           </div>
         )}
 
-        {/* ✅ Button thanh toán mua tệ */}
         {mode === "buy" && result && payAmount > 0 && (
           <div className="mt-4 flex justify-end">
             <button
@@ -301,7 +291,7 @@ export default function TierBox() {
         )}
       </div>
 
-      {/* ✅ MODAL THANH TOÁN (chỉ BUY) */}
+      {/* Modal */}
       {showPay && mode === "buy" && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
           <div className="bg-white rounded-2xl shadow-soft max-w-md w-full p-6 relative">
@@ -323,9 +313,7 @@ export default function TierBox() {
               <div><b>Chủ tài khoản:</b> {payCfg?.accountName || "-"}</div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="truncate">
-                  <b>Số tài khoản:</b> {payCfg?.accountNumber || "-"}
-                </div>
+                <div className="truncate"><b>Số tài khoản:</b> {payCfg?.accountNumber || "-"}</div>
                 {payCfg?.accountNumber && (
                   <button
                     onClick={() => copy(payCfg.accountNumber, "STK")}
@@ -352,9 +340,7 @@ export default function TierBox() {
               </div>
 
               <div className="flex items-center justify-between gap-3">
-                <div className="truncate">
-                  <b>Nội dung:</b> {payContent || "-"}
-                </div>
+                <div className="truncate"><b>Nội dung:</b> {payContent || "-"}</div>
                 {payContent && (
                   <button
                     onClick={() => copy(payContent, "Nội dung")}
@@ -392,5 +378,14 @@ export default function TierBox() {
         </div>
       )}
     </div>
+  );
+}
+
+/** ✅ Export wrapper: bọc Suspense để build không lỗi */
+export default function TierBox() {
+  return (
+    <Suspense fallback={null}>
+      <TierBoxInner />
+    </Suspense>
   );
 }
